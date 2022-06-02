@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+
+snrs_version="@PROJECT_VERSION@"
+snrs_install_prefix="@CMAKE_INSTALL_PREFIX@"
+snrs_bin_dir="${snrs_install_prefix}/bin"
+snrs_inc_dir="${snrs_install_prefix}/include"
+snrs_lib_dir="${snrs_install_prefix}/lib"
+snrs_script_dir="${snrs_lib_dir}/SNRS/scripts"
+snrs_dataroot_dir="${snrs_install_prefix}/share/SNRS"
+snrs_doc_dir="${snrs_dataroot_dir}/documentation"
+snrs_resource_dir="${snrs_dataroot_dir}/resources"
+snrs_data_dir="${snrs_resource_dir}/data"
+snrs_config_dir="${snrs_resource_dir}/config"
+
+option="$1"
+shift 1
+
+function app_usage()
+{
+
+    cat <<EOF
+snrs-config - Print informations about the SNRS package
+
+Usage:  snrs-config [OPTION]
+
+Options:
+
+  --help         Print this help
+  --prefix       Print the installation prefix
+  --version      Print the SNRS version
+  --incdir       Print the installation path for headers
+  --bindir       Print the installation path for binaries
+  --libdir       Print the installation path for libraries
+  --resourcedir  Print the installation path for resource files
+  --datadir      Print the installation path for data files 
+  --scriptdir    Print the installation path for scripts (optional)
+  --docdir       Print the installation path for documentation files (optional)
+  --configdir    Print the installation path for configuration files (optional)
+
+Notice:  When loaded, the SNRS library registers itself in the Bayeux's kernel
+under the name 'snrs'.
+
+EOF
+    return 0
+}
+
+if [ "x${option}" = "x--help" -o "x${option}" = "x-h" ]; then
+    app_usage
+elif [ "x${option}" = "x--prefix" ]; then
+   echo ${snrs_install_prefix}
+elif [ "x${option}" = "x--version" ]; then
+   echo ${snrs_version}
+elif [ "x${option}" = "x--incdir" ]; then
+   echo ${snrs_inc_dir}
+elif [ "x${option}" = "x--bindir" ]; then
+   echo ${snrs_bin_dir}
+elif [ "x${option}" = "x--libdir" ]; then
+   echo ${snrs_lib_dir}
+elif [ "x${option}" = "x--scriptdir" ]; then
+   echo ${snrs_script_dir}
+elif [ "x${option}" = "x--datadir" ]; then
+   echo ${snrs_data_dir}
+# elif [ "x${option}" = "x--docdir" ]; then
+#    echo ${snrs_doc_dir}
+elif [ "x${option}" = "x--resourcedir" ]; then
+   echo ${snrs_resource_dir}
+# elif [ "x${option}" = "x--configdir" ]; then
+#    echo ${snrs_config_dir}
+else
+  echo >&2 "[error] Invalid option!"
+  app_usage
+  exit 1
+fi
+
+exit 0
