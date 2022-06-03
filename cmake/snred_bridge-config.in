@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 
-snrs_version="@PROJECT_VERSION@"
-snrs_install_prefix="@CMAKE_INSTALL_PREFIX@"
-snrs_bin_dir="${snrs_install_prefix}/bin"
-snrs_inc_dir="${snrs_install_prefix}/include"
-snrs_lib_dir="${snrs_install_prefix}/lib"
-snrs_script_dir="${snrs_lib_dir}/SNRS/scripts"
-snrs_dataroot_dir="${snrs_install_prefix}/share/SNRS"
-snrs_doc_dir="${snrs_dataroot_dir}/documentation"
-snrs_resource_dir="${snrs_dataroot_dir}/resources"
-snrs_data_dir="${snrs_resource_dir}/data"
-snrs_config_dir="${snrs_resource_dir}/config"
+snred_bridge_version="@PROJECT_VERSION@"
+snred_bridge_install_prefix="@CMAKE_INSTALL_PREFIX@"
+snred_bridge_bin_dir="${snred_bridge_install_prefix}/bin"
+snred_bridge_inc_dir="${snred_bridge_install_prefix}/include"
+snred_bridge_lib_dir="${snred_bridge_install_prefix}/lib"
+snred_bridge_script_dir="${snred_bridge_lib_dir}/SNRED_BRIDGE/scripts"
+snred_bridge_dataroot_dir="${snred_bridge_install_prefix}/share/SNRED_BRIDGE"
+snred_bridge_doc_dir="${snred_bridge_dataroot_dir}/documentation"
+snred_bridge_resource_dir="${snred_bridge_dataroot_dir}/resources"
+snred_bridge_data_dir="${snred_bridge_resource_dir}/data"
+snred_bridge_config_dir="${snred_bridge_resource_dir}/config"
 
 option="$1"
 shift 1
@@ -19,15 +19,15 @@ function app_usage()
 {
 
     cat <<EOF
-snrs-config - Print informations about the SNRS package
+snred_bridge-config - Print informations about the SNRED_BRIDGE package
 
-Usage:  snrs-config [OPTION]
+Usage:  snred_bridge-config [OPTION]
 
 Options:
 
   --help         Print this help
   --prefix       Print the installation prefix
-  --version      Print the SNRS version
+  --version      Print the SNRED_BRIDGE version
   --incdir       Print the installation path for headers
   --bindir       Print the installation path for binaries
   --libdir       Print the installation path for libraries
@@ -37,8 +37,8 @@ Options:
   --docdir       Print the installation path for documentation files (optional)
   --configdir    Print the installation path for configuration files (optional)
 
-Notice:  When loaded, the SNRS library registers itself in the Bayeux's kernel
-under the name 'snrs'.
+Notice:  When loaded, the SNRED_BRIDGE library registers itself in the Bayeux's kernel
+under the name 'snred_bridge'.
 
 EOF
     return 0
@@ -47,25 +47,25 @@ EOF
 if [ "x${option}" = "x--help" -o "x${option}" = "x-h" ]; then
     app_usage
 elif [ "x${option}" = "x--prefix" ]; then
-   echo ${snrs_install_prefix}
+   echo ${snred_bridge_install_prefix}
 elif [ "x${option}" = "x--version" ]; then
-   echo ${snrs_version}
+   echo ${snred_bridge_version}
 elif [ "x${option}" = "x--incdir" ]; then
-   echo ${snrs_inc_dir}
+   echo ${snred_bridge_inc_dir}
 elif [ "x${option}" = "x--bindir" ]; then
-   echo ${snrs_bin_dir}
+   echo ${snred_bridge_bin_dir}
 elif [ "x${option}" = "x--libdir" ]; then
-   echo ${snrs_lib_dir}
+   echo ${snred_bridge_lib_dir}
 elif [ "x${option}" = "x--scriptdir" ]; then
-   echo ${snrs_script_dir}
+   echo ${snred_bridge_script_dir}
 elif [ "x${option}" = "x--datadir" ]; then
-   echo ${snrs_data_dir}
+   echo ${snred_bridge_data_dir}
 # elif [ "x${option}" = "x--docdir" ]; then
-#    echo ${snrs_doc_dir}
+#    echo ${snred_bridge_doc_dir}
 elif [ "x${option}" = "x--resourcedir" ]; then
-   echo ${snrs_resource_dir}
+   echo ${snred_bridge_resource_dir}
 # elif [ "x${option}" = "x--configdir" ]; then
-#    echo ${snrs_config_dir}
+#    echo ${snred_bridge_config_dir}
 else
   echo >&2 "[error] Invalid option!"
   app_usage
