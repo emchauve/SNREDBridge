@@ -1,0 +1,121 @@
+// snredbridge/snredbridge.cc - Implementation of SNREDBridge init/fini function
+//
+// Copyright (c) 2018 by Francois Mauger <mauger@lpccaen.in2p3.fr>
+//
+// This file is part of SNREDBridge.
+//
+// SNREDBridge is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// SNREDBridge is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with SNREDBridge. If not, see <http://www.gnu.org/licenses/>.
+
+// Ourselves:
+#include <snredbridge/snredbridge.h>
+
+// Standard library
+#include <string>
+#include <iostream>
+
+// This project:
+#include <snredbridge/snredbridge_config.h>
+
+// Third party:
+#if SNREDBRIDGE_WITH_BAYEUX_DEPENDENCY == 1
+// - Bayeux:
+#include <bayeux/bayeux.h>
+#endif // SNREDBRIDGE_WITH_BAYEUX_DEPENDENCY
+
+// This project:
+#include <snredbridge/version.h>
+#include <snredbridge/resource_files.h>
+#include <snredbridge/snredbridge_config.h>
+#include <snredbridge/snredbridge_library.h>
+#include <snredbridge/exception.h>
+
+namespace {
+
+  static bool _snredbridgeInit = false;
+  static bool _bayeuxInitMaster = false;
+
+  void snredbridge_initialize_impl()
+  {
+    // snredbridge::init_resources();
+
+    if (!::snredbridge::snredbridge_library::is_instantiated()) {
+      ::snredbridge::snredbridge_library & snredbridgeLib = ::snredbridge::snredbridge_library::instantiate();
+      snredbridgeLib.initialize();
+    }
+
+    return;
+  }
+
+  void snredbridge_terminate_impl()
+  {
+    if (::snredbridge::snredbridge_library::is_instantiated()) {
+      ::snredbridge::snredbridge_library & snredbridgeLib = ::snredbridge::snredbridge_library::instance();
+      if (snredbridgeLib.is_initialized()) {
+        snredbridgeLib.shutdown();
+      }
+    }
+    return;
+  }
+
+}
+
+namespace snredbridge {
+
+  bool is_initialized()
+  {
+    return ::_snredbridgeInit;
+  }
+
+  void initialize(int argc_, char * argv_[], uint32_t flags_)
+  {
+    if (! ::_snredbridgeInit) {
+#if SNREDBRIDGE_WITH_BAYEUX_DEPENDENCY == 1
+      // Wrap Bayeux initialization because we need resources from various Bayeux's modules:
+      if (!::bayeux::is_initialized()) {
+        ::bayeux::initialize(argc_,argv_, flags_);
+        ::_bayeuxInitMaster = true;
+      }
+#endif // SNREDBRIDGE_WITH_BAYEUX_DEPENDENCY
+      // Initialization code from SNREDBridge itself:
+      snredbridge_initialize_impl();
+      ::_snredbridgeInit = true;
+    } else {
+      SN_THROW_IF(true, std::logic_error,
+                  "Attempt to initialize the already initialized SNREDBridge library!");
+    }
+    return;
+  }
+
+  void terminate()
+  {
+    if (::_snredbridgeInit) {
+      // Termination code for SNREDBridge:
+      ::_snredbridgeInit = false;
+      snredbridge_terminate_impl();
+
+#if SNREDBRIDGE_WITH_BAYEUX_DEPENDENCY == 1
+      // Wrap Bayeux termination:
+      if (::bayeux::is_initialized() and ::_bayeuxInitMaster) {
+        ::bayeux::terminate();
+        ::_bayeuxInitMaster = false;
+      }
+#endif // SNREDBRIDGE_WITH_BAYEUX_DEPENDENCY
+    } else {
+      SN_THROW(std::logic_error,
+               "Attempt to terminate the already terminated SNREDBridge library!");
+    }
+    return;
+  }
+
+} // namespace snredbridge
