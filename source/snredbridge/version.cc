@@ -37,9 +37,6 @@ namespace snredbridge {
     return static_cast<int>(SNREDBRIDGE_VERSION_PATCH);
   }
 
-  int version::get_revision() {
-    return static_cast<int>(SNREDBRIDGE_VERSION_REVISION);
-  }
 
   std::string version::get_version() {
     static std::string version("");
