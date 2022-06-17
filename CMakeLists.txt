@@ -106,6 +106,9 @@ include(SNREDBridgeDependencies)
 message( STATUS "[info] Adding subdirectory 'source'...")
 add_subdirectory(source)
 
+# message( STATUS "[info] Adding subdirectory 'programs'...")
+# add_subdirectory(programs)
+
 if(SNREDBRIDGE_WITH_DOCS)
   add_subdirectory(documentation)
 endif()
