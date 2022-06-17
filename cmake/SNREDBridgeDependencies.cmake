@@ -14,12 +14,7 @@ if(needBayeux)
   if (Bayeux_FOUND)
     message( STATUS "[info] Bayeux ${Bayeux_VERSION} found.")
     message( STATUS "[info] BAYEUX_BOOST_VERSION    = '${BAYEUX_BOOST_VERSION}'")
-    # Trick because BayeuxConfig 3.2 does not provide the BAYEUX_BOOST_COMPONENTS variable:
     set(SNREDBridge_BAYEUX_VERSION ${Bayeux_VERSION})
-    # # Trick because BayeuxConfig 3.2 does not provide the BAYEUX_BOOST_COMPONENTS variable:
-    # set(BAYEUX_BOOST_COMPONENTS
-    #   "filesystem;system;serialization;iostreams;program_options;regex;thread"
-    #   )
     message( STATUS "[info] BAYEUX_BOOST_COMPONENTS = '${BAYEUX_BOOST_COMPONENTS}'")
     message( STATUS "[info] Bayeux_CMAKE_CONFIG_DIR = '${Bayeux_CMAKE_CONFIG_DIR}'")
   endif()
@@ -47,12 +42,38 @@ if(needBayeux)
   endif()
 
   #-------------------------------------------------------
-  # SNFEE
-
-
+  # SNFrontEndElectronics
+  set(SNFEE_MIN_VERSION "0.3.0")
+  message( STATUS "[info] Searching SNFrontEndElectronics ${SNFEE_MIN_VERSION}...")
+  find_package(SNFrontEndElectronics ${SNFEE_MIN_VERSION} REQUIRED NO_MODULE)
+  if (SNFrontEndElectronics_FOUND)
+    message( STATUS "[info] SNFrontEndElectronics ${SNFrontEndElectronics_VERSION} found.")
+    set(SNREDBridge_SNFEE_VERSION ${SNFrontEndElectronics_VERSION})
+    message( STATUS "[info] SNFrontEndElectronics_DIR = '${SNFrontEndElectronics_DIR}'")
+    message( STATUS "[info] SNFrontEndElectronics_INCLUDE_DIRS = '${SNFrontEndElectronics_INCLUDE_DIRS}'")
+    find_program(SNFrontEndElectronicsQueryExe snfee-query PATHS "${SNFrontEndElectronics_DIR}/../../.." PATH_SUFFIXES "bin" REQUIRED)
+    message( STATUS "[info] SNFrontEndElectronicsQueryExe = '${SNFrontEndElectronicsQueryExe}'")
+    if ("${SNFrontEndElectronicsQueryExe}" STREQUAL "SNFrontEndElectronicsQueryExe-NOTFOUND")
+      message( FATAL_ERROR "[info] Could not find SNFrontEndElectronics 'sncablingquery' script!")
+    endif()
+    exec_program(${SNFrontEndElectronicsQueryExe} ARGS "--with-snfee" OUTPUT_VARIABLE _snfrontendelectronics_with_snfee)
+    message( STATUS "[info] _snfrontendelectronics_with_snfee = '${_snfrontendelectronics_with_snfee}'")
+    if (NOT "${_snfrontendelectronics_with_snfee}" STREQUAL "1")
+      message( FATAL_ERROR "[info] Found SNFrontEndElectronics without 'snfee' support!")
+    endif()
+  endif()
 
   #-------------------------------------------------------
   # Falaise
+  set(FALAISE_MIN_VERSION "4.0.0")
+  message( STATUS "[info] Searching Falaise ${FALAISE_MIN_VERSION}...")
+  find_package(Falaise ${FALAISE_MIN_VERSION} REQUIRED NO_MODULE)
+  if (Falaise_FOUND)
+    message( STATUS "[info] Falaise ${Falaise_VERSION} found.")
+    set(SNREDBridge_FALAISE_VERSION ${Falaise_VERSION})
+    message( STATUS "[info] Falaise_DIR = '${Falaise_DIR}'")
+    message( STATUS "[info] Falaise_INCLUDE_DIRS = '${Falaise_INCLUDE_DIRS}'")
+  endif()
 
 endif()
 

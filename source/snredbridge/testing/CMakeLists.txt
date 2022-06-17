@@ -1,5 +1,5 @@
 list(APPEND SNREDBridge_TESTS
-  test-snredbridge.cxx
+#  test-snredbridge.cxx
   )
 
 if (SNREDBRIDGE_ENABLE_TESTING)
