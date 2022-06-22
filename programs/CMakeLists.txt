@@ -1,7 +1,7 @@
 add_executable(snredbridge-red_bridge red_bridge.cxx)
 
 target_link_libraries(snredbridge-red_bridge
-  snredbridge
+  SNREDBridge
   Bayeux::Bayeux
   SNCabling::SNCabling
   SNFrontEndElectronics::snfee
