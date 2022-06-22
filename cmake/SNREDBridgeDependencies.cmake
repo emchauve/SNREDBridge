@@ -43,7 +43,7 @@ if(needBayeux)
 
   #-------------------------------------------------------
   # SNFrontEndElectronics
-  set(SNFEE_MIN_VERSION "0.3.0")
+  set(SNFEE_MIN_VERSION "0.2.0")
   message( STATUS "[info] Searching SNFrontEndElectronics ${SNFEE_MIN_VERSION}...")
   find_package(SNFrontEndElectronics ${SNFEE_MIN_VERSION} REQUIRED NO_MODULE)
   if (SNFrontEndElectronics_FOUND)

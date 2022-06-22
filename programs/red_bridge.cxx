@@ -14,14 +14,14 @@
 // - Boost:
 #include <boost/program_options.hpp>
 
+// - Falaise:
+#include <falaise/snemo/datamodels/unified_digitized_data.h>
+
 // - SNCabling
 #include <sncabling/sncabling.h>
 #include <sncabling/gg_cell_id.h>
 #include <sncabling/om_id.h>
 
 // - SNFEE:
-#include <snfee/data/raw_trigger_data.h>
-#include <snfee/falaise/snemo/datamodels/raw_event_data.h>
-
-// - Falaise:
-#include <falaise/snemo/datamodels/raw_event_data.h>
+#include <snfee/data/calo_hit_record.h>
+#include <snfee/data/raw_event_data.h>
