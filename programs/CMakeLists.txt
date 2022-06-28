@@ -1,21 +1,43 @@
-add_executable(snredbridge-red_bridge red_bridge.cxx)
+# Require out-of-source build
+if(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+  message(STATUS "The project requires an out-of-source build.")
+  message(STATUS "Please remove these files from ${CMAKE_BINARY_DIR} first:")
+  message(STATUS "  CMakeCache.txt")
+  message(STATUS "  CMakeFiles")
+  message(STATUS "Once these files are removed, create a separate directory")
+  message(STATUS "and run CMake from there, pointing it to:")
+  message(STATUS "  ${CMAKE_SOURCE_DIR}")
+  message(FATAL_ERROR "in-source build detected")
+endif()
 
-target_link_libraries(snredbridge-red_bridge
-  SNREDBridge
-  Bayeux::Bayeux
-  SNCabling::SNCabling
-  SNFrontEndElectronics::snfee
-  Falaise::Falaise
-  )
-set_target_properties(snredbridge-red_bridge
-  PROPERTIES
-  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-  ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
-  )
-install(FILES
-    ${CMAKE_BINARY_DIR}/snredbridge-red_bridge
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}
-    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
-    GROUP_READ GROUP_EXECUTE
-    WORLD_READ WORLD_EXECUTE
-    )
+# Project setup
+cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
+project(snfee_examples_read_red VERSION 0.1.0)
+
+# - Load Builtin/Custom Modules
+include(GNUInstallDirs)
+list(INSERT CMAKE_MODULE_PATH 0 ${PROJECT_SOURCE_DIR}/cmake)
+message(STATUS "[info] CMAKE_MODULE_PATH = '${CMAKE_MODULE_PATH}'")
+
+# - Dependencies
+find_package(Bayeux REQUIRED)
+# include_directories(${Bayeux_INCLUDE_DIRS})
+
+find_package(SNFrontEndElectronics REQUIRED)
+# include_directories(${SNFrontEndElectronics_INCLUDE_DIRS})
+
+find_package(Falaise REQUIRED)
+# include_directories(${Falaise_INCLUDE_DIRS})
+
+# - Executable:
+file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/*.cxx)
+foreach(source ${SOURCES})
+  file(RELATIVE_PATH cxx_filename ${CMAKE_CURRENT_SOURCE_DIR} ${source})
+  string(REPLACE ".cxx" "" exe_filename ${cxx_filename})
+  message(STATUS "adding executable ${exe_filename}")
+  add_executable(${exe_filename} ${cxx_filename})
+  target_link_libraries(${exe_filename}
+    Bayeux::Bayeux
+    SNFrontEndElectronics::snfee
+    Falaise::Falaise)
+endforeach(source ${SOURCES})

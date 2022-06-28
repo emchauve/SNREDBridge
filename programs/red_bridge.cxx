@@ -33,6 +33,9 @@ namespace bpo = boost::program_options;
 #include <snfee/data/raw_event_data.h>
 
 
+void do_red_to_udd_conversion(snfee::data::raw_event_data,
+                              snemo::datamodel::unified_digitized_data);
+
 //----------------------------------------------------------------------
 // MAIN PROGRAM
 //----------------------------------------------------------------------
@@ -85,12 +88,6 @@ int main (int argc, char *argv[])
   // Instantiate a reader
   snfee::io::multifile_data_reader red_source(reader_cfg);
 
-  // Working RED object
-  snfee::data::raw_event_data red;
-
-  // Working UDD object
-  snemo::datamodel::unified_digitized_data udd;
-
   // RED counter
   std::size_t red_counter = 0;
 
@@ -99,6 +96,12 @@ int main (int argc, char *argv[])
       // Check the serialization tag of the next record:
       DT_THROW_IF(!red_source.record_tag_is(snfee::data::raw_event_data::SERIAL_TAG),
                   std::logic_error, "Unexpected record tag '" << red_source.get_record_tag() << "'!");
+
+      // Empty working RED object
+      snfee::data::raw_event_data red;
+
+      // Empty working UDD object
+      snemo::datamodel::unified_digitized_data udd;
 
       // Load the next RED object:
       red_source.load(red);
@@ -110,17 +113,12 @@ int main (int argc, char *argv[])
       // Write UDD event in the output file
 
 
-
-      // Clear working RED and working UDD
-
-
-
       // Increment the counter
       red_counter++;
 
     } // (while red_source.has_record_tag())
 
-  std::cout << "Total RED object processed into UDD object = " << red_counter << std::endl;
+  std::cout << "Total RED object processed and converted into UDD object = " << red_counter << std::endl;
 
   snfee::terminate();
 
@@ -133,19 +131,19 @@ void do_red_to_udd_conversion(snfee::data::raw_event_data red_,
                               snemo::datamodel::unified_digitized_data udd_)
 {
   // Run number
-  int32_t red_run_id   = red.get_run_id();
+  int32_t red_run_id   = red_.get_run_id();
 
   // Event number
-  int32_t red_event_id = red.get_event_id();
+  int32_t red_event_id = red_.get_event_id();
 
   // Container of merged TriggerID(s) by event builder
-  const std::set<int32_t> & red_trigger_ids = red.get_origin_trigger_ids();
+  const std::set<int32_t> & red_trigger_ids = red_.get_origin_trigger_ids();
 
   // RED Digitized calo hits
-  const std::vector<snfee::data::calo_digitized_hit> red_calo_hits = red.get_calo_hits();
+  const std::vector<snfee::data::calo_digitized_hit> red_calo_hits = red_.get_calo_hits();
 
   // RED Digitized tracker hits
-  const std::vector<snfee::data::tracker_digitized_hit> red_tracker_hits = red.get_tracker_hits();
+  const std::vector<snfee::data::tracker_digitized_hit> red_tracker_hits = red_.get_tracker_hits();
 
   // Print RED infos
   std::cout << "Event #" << red_event_id << " contains "
@@ -173,21 +171,22 @@ void do_red_to_udd_conversion(snfee::data::raw_event_data red_,
   // Copy RED attributes to UDD attributes
   udd_.set_run_id(red_run_id);
   udd_.set_event_id(red_event_id);
-  udd_.set_reference_timestamp(red_.get_reference_time());
+  udd_.set_reference_timestamp(red_.get_reference_time().get_ticks());
   udd_.set_origin_trigger_ids(red_trigger_ids);
   udd_.set_auxiliaries(red_.get_auxiliaries());
 
-  // Copy RED calo digitized hit into UDD calo digitized hit:
-  for (size_t ihit = 0; ihit < red_calo_hits.size(), ihit++)
+  // Scan and copy RED calo digitized hit into UDD calo digitized hit:
+  for (std::size_t ihit = 0; ihit < red_calo_hits.size(); ihit++)
     {
       snfee::data::calo_digitized_hit red_calo_hit = red_calo_hits[ihit];
       snemo::datamodel::calorimeter_digitized_hit & udd_calo_hit = udd_.add_calorimeter_hit();
 
       udd_calo_hit.set_geom_id(red_calo_hit.get_geom_id());
-      udd_calo_hit.set_timestamp(red_calo_hit.get_reference_time());
-      udd_calo_hit.set_waveform(red_calo_hit.get_waveform());
-      udd_calo_hit.set_low_threshold_only(red_calo_hit.get_low_threshold_only());
-      udd_calo_hit.set_high_threshold(red_calo_hit.get_high_threshold());
+      udd_calo_hit.set_timestamp(red_calo_hit.get_reference_time().get_ticks());
+      std::vector<int16_t> calo_waveform = red_calo_hit.get_waveform();
+      udd_calo_hit.set_waveform(calo_waveform);
+      udd_calo_hit.set_low_threshold_only(red_calo_hit.is_low_threshold_only());
+      udd_calo_hit.set_high_threshold(red_calo_hit.is_high_threshold());
       udd_calo_hit.set_fcr(red_calo_hit.get_fcr());
       udd_calo_hit.set_lt_trigger_counter(red_calo_hit.get_lt_trigger_counter());
       udd_calo_hit.set_lt_time_counter(red_calo_hit.get_lt_time_counter());
@@ -197,54 +196,84 @@ void do_red_to_udd_conversion(snfee::data::raw_event_data red_,
       udd_calo_hit.set_fwmeas_charge(red_calo_hit.get_fwmeas_charge());
       udd_calo_hit.set_fwmeas_rising_cell(red_calo_hit.get_fwmeas_rising_cell());
       udd_calo_hit.set_fwmeas_falling_cell(red_calo_hit.get_fwmeas_falling_cell());
-      udd_calo_hit.set_origin(red_calo_hit.get_origin());
+      snemo::datamodel::calorimeter_digitized_hit::rtd_origin the_rtd_origin(red_calo_hit.get_origin().get_hit_number(),
+                                                                             red_calo_hit.get_origin().get_trigger_id());
+      udd_calo_hit.set_origin(the_rtd_origin);
+
     } // end of for ihit
 
 
 
-  // Copy RED tracker digitized hit into UDD calo digitized hit:
-  for (size_t ihit=0; ihit < red_tracker_hits.size(), ihit++)
+  // Scan and copy RED tracker digitized hit into UDD calo digitized hit:
+  for (std::size_t ihit = 0; ihit < red_tracker_hits.size(); ihit++)
     {
-      snfee::data::tracker_digitized_hit red_tracker_hit = red_tracker_hits[i];
+      snfee::data::tracker_digitized_hit red_tracker_hit = red_tracker_hits[ihit];
       snemo::datamodel::tracker_digitized_hit & udd_tracker_hit = udd_.add_tracker_hit();
       udd_tracker_hit.set_geom_id(red_tracker_hit.get_geom_id());
 
+      // Do the loop on RED GG timestamps and convert them into UDD GG timestamps
+	  const std::vector<snfee::data::tracker_digitized_hit::gg_times> gg_timestamps_v = red_tracker_hit.get_times();
 
-      // GG timestamps
-	  const std::vector<snemo::datamodel::tracker_digitized_hit::gg_times> & gg_timestamps_v = red_tracker_hit.get_times();
-	  // NB: several timestamps may be read from the same GG cell (probably due to noise ?).
-	  // If so, decision should be done on which one has to be used -- Looks to be rare fortunatly
+      for (std::size_t iggtime = 0; iggtime < gg_timestamps_v.size(); iggtime)
+        {
+          // Retrieve RED GG timestamps
+	      const snfee::data::tracker_digitized_hit::gg_times & a_gg_timestamp = gg_timestamps_v[iggtime];
 
-	  // Scan timestamps
-	  if (gg_timestamps_v.size() >= 1)
-	    {
-	      // Case without multiple hit in the same category
-	      const snemo::datamodel::tracker_digitized_hit::gg_times & gg_timestamps = gg_timestamps_v.front();
+          // Create empty UDD GG timestamps
+          snemo::datamodel::tracker_digitized_hit::gg_times udd_gg_timestamp;
 
-	      // ANODE timestamps
-	      const snemo::datamodel::timestamp anode_timestamp_r0 = gg_timestamps.get_anode_time(0);
-	      const int64_t anode_tdc_r0 = anode_timestamp_r0.get_ticks(); // >>> 1 tracker TDC tick = 12.5E-9 sec
+          // Fill UDD anode and cathode timestamps and RTD origin for backtracing
+          snemo::datamodel::tracker_digitized_hit::rtd_origin anode_r0_rtd_origin(a_gg_timestamp.get_anode_origin(snfee::data::tracker_digitized_hit::ANODE_R0).get_hit_number(),
+                                                                                  a_gg_timestamp.get_anode_origin(snfee::data::tracker_digitized_hit::ANODE_R0).get_trigger_id());
+          udd_gg_timestamp.set_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R0,
+                                            anode_r0_rtd_origin);
+          udd_gg_timestamp.set_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R0,
+                                          a_gg_timestamp.get_anode_time(snfee::data::tracker_digitized_hit::ANODE_R0).get_ticks());
 
-	      const snemo::datamodel::timestamp anode_timestamp_r1 = gg_timestamps.get_anode_time(1);
-	      const int64_t anode_tdc_r1 = anode_timestamp_r1.get_ticks();
+          snemo::datamodel::tracker_digitized_hit::rtd_origin anode_r1_rtd_origin(a_gg_timestamp.get_anode_origin(snfee::data::tracker_digitized_hit::ANODE_R1).get_hit_number(),
+                                                                                  a_gg_timestamp.get_anode_origin(snfee::data::tracker_digitized_hit::ANODE_R1).get_trigger_id());
+          udd_gg_timestamp.set_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R1,
+                                            anode_r1_rtd_origin);
+          udd_gg_timestamp.set_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R1,
+                                          a_gg_timestamp.get_anode_time(snfee::data::tracker_digitized_hit::ANODE_R1).get_ticks());
 
-	      const snemo::datamodel::timestamp anode_timestamp_r2 = gg_timestamps.get_anode_time(2);
-	      const int64_t anode_tdc_r2 = anode_timestamp_r2.get_ticks();
+          snemo::datamodel::tracker_digitized_hit::rtd_origin anode_r2_rtd_origin(a_gg_timestamp.get_anode_origin(snfee::data::tracker_digitized_hit::ANODE_R2).get_hit_number(),
+                                                                                  a_gg_timestamp.get_anode_origin(snfee::data::tracker_digitized_hit::ANODE_R2).get_trigger_id());
+          udd_gg_timestamp.set_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R2,
+                                            anode_r2_rtd_origin);
+          udd_gg_timestamp.set_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R2,
+                                          a_gg_timestamp.get_anode_time(snfee::data::tracker_digitized_hit::ANODE_R2).get_ticks());
 
-	      const snemo::datamodel::timestamp anode_timestamp_r3 = gg_timestamps.get_anode_time(3);
-	      const int64_t anode_tdc_r3 = anode_timestamp_r3.get_ticks();
+          snemo::datamodel::tracker_digitized_hit::rtd_origin anode_r3_rtd_origin(a_gg_timestamp.get_anode_origin(snfee::data::tracker_digitized_hit::ANODE_R3).get_hit_number(),
+                                                                                  a_gg_timestamp.get_anode_origin(snfee::data::tracker_digitized_hit::ANODE_R3).get_trigger_id());
+          udd_gg_timestamp.set_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R3,
+                                            anode_r3_rtd_origin);
+          udd_gg_timestamp.set_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R3,
+                                          a_gg_timestamp.get_anode_time(snfee::data::tracker_digitized_hit::ANODE_R3).get_ticks());
 
-	      const snemo::datamodel::timestamp anode_timestamp_r4 = gg_timestamps.get_anode_time(4);
-	      const int64_t anode_tdc_r4 = anode_timestamp_r4.get_ticks();
+          snemo::datamodel::tracker_digitized_hit::rtd_origin anode_r4_rtd_origin(a_gg_timestamp.get_anode_origin(snfee::data::tracker_digitized_hit::ANODE_R4).get_hit_number(),
+                                                                                  a_gg_timestamp.get_anode_origin(snfee::data::tracker_digitized_hit::ANODE_R4).get_trigger_id());
+          udd_gg_timestamp.set_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R4,
+                                            anode_r4_rtd_origin);
+          udd_gg_timestamp.set_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R4,
+                                          a_gg_timestamp.get_anode_time(snfee::data::tracker_digitized_hit::ANODE_R4).get_ticks());
 
-	      // CATHODE timestamps
-	      const snemo::datamodel::timestamp bottom_cathode_timestamp = gg_timestamps.get_bottom_cathode_time();
-	      const int64_t bottom_cathode_tdc = bottom_cathode_timestamp.get_ticks();
-
-	      const snemo::datamodel::timestamp top_cathode_timestamp = gg_timestamps.get_top_cathode_time();
-	      const int64_t top_cathode_tdc = top_cathode_timestamp.get_ticks();
-	    }
+          snemo::datamodel::tracker_digitized_hit::rtd_origin bottom_cathode_rtd_origin(a_gg_timestamp.get_bottom_cathode_origin().get_hit_number(),
+                                                                                        a_gg_timestamp.get_bottom_cathode_origin().get_trigger_id());
+          udd_gg_timestamp.set_bottom_cathode_origin(bottom_cathode_rtd_origin);
+          udd_gg_timestamp.set_bottom_cathode_time(a_gg_timestamp.get_bottom_cathode_time().get_ticks());
 
 
-      return;
-    }
+          snemo::datamodel::tracker_digitized_hit::rtd_origin top_cathode_rtd_origin(a_gg_timestamp.get_top_cathode_origin().get_hit_number(),
+                                                                                     a_gg_timestamp.get_top_cathode_origin().get_trigger_id());
+          udd_gg_timestamp.set_top_cathode_origin(top_cathode_rtd_origin);
+          udd_gg_timestamp.set_top_cathode_time(a_gg_timestamp.get_top_cathode_time().get_ticks());
+
+
+	    } // end of iggtime
+
+    } // end for ihit
+
+
+  return;
+}
