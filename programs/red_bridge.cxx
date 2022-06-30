@@ -19,21 +19,13 @@ namespace bpo = boost::program_options;
 #include <falaise/snemo/datamodels/unified_digitized_data.h>
 #include <falaise/snemo/datamodels/event_header.h>
 
-// // - SNCabling
-// #include <sncabling/sncabling.h>
-// #include <sncabling/calo_signal_cabling.h>
-// #include <sncabling/om_id.h>
-// #include <sncabling/tracker_cabling.h>
-// #include <sncabling/gg_cell_id.h>
-// #include <sncabling/label.h>
-
 // - SNFEE:
 #include <snfee/snfee.h>
 #include <snfee/io/multifile_data_reader.h>
 #include <snfee/data/raw_event_data.h>
 
 
-void do_red_to_udd_conversion(snfee::data::raw_event_data,
+void do_red_to_udd_conversion(const snfee::data::raw_event_data,
                               snemo::datamodel::unified_digitized_data);
 
 //----------------------------------------------------------------------
@@ -69,13 +61,13 @@ int main (int argc, char *argv[])
             }
 
           else
-            std::cerr << "*** unkown option " << arg << std::endl;
+            std::cerr << "*** ERROR: unkown option " << arg << std::endl;
         }
     }
 
   if (input_filename.empty())
     {
-      std::cerr << "*** missing input filename !" << std::endl;
+      std::cerr << "*** ERROR: missing input filename !" << std::endl;
       return 1;
     }
 
@@ -109,16 +101,31 @@ int main (int argc, char *argv[])
       // Do the RED to UDD conversion
       do_red_to_udd_conversion(red, udd);
 
+      std::clog << "DEBUG main : Exit do_red_to_udd_conversion" << std::endl;
 
       // Write UDD event in the output file
-
+      // datatools::data_writer writer(output_filename,
+      //                               datatools::using_multiple_archives);
 
       // Increment the counter
       red_counter++;
 
     } // (while red_source.has_record_tag())
 
-  std::cout << "Total RED object processed and converted into UDD object = " << red_counter << std::endl;
+
+  // Check input RED file and output UDD file and count the number of events in each file
+
+  // UDD counter
+  std::size_t udd_events = 0;
+
+  // Read UDD file here
+
+
+  std::cout << "Results :" << std::endl;
+  std::cout << "- Worker #0 (input RED)" << std::endl;
+  std::cout << "  - Processed records : " << red_counter << std::endl;
+  std::cout << "- Worker #1 (output UDD)" << std::endl;
+  std::cout << "  - Stored records : " << udd_events << std::endl;
 
   snfee::terminate();
 
@@ -127,7 +134,7 @@ int main (int argc, char *argv[])
 
 
 
-void do_red_to_udd_conversion(snfee::data::raw_event_data red_,
+void do_red_to_udd_conversion(const snfee::data::raw_event_data red_,
                               snemo::datamodel::unified_digitized_data udd_)
 {
   // Run number
@@ -178,6 +185,7 @@ void do_red_to_udd_conversion(snfee::data::raw_event_data red_,
   // Scan and copy RED calo digitized hit into UDD calo digitized hit:
   for (std::size_t ihit = 0; ihit < red_calo_hits.size(); ihit++)
     {
+      std::clog << "DEBUG do_red_to_udd_conversion : Calo hit #" << ihit << std::endl;
       snfee::data::calo_digitized_hit red_calo_hit = red_calo_hits[ihit];
       snemo::datamodel::calorimeter_digitized_hit & udd_calo_hit = udd_.add_calorimeter_hit();
 
@@ -207,6 +215,7 @@ void do_red_to_udd_conversion(snfee::data::raw_event_data red_,
   // Scan and copy RED tracker digitized hit into UDD calo digitized hit:
   for (std::size_t ihit = 0; ihit < red_tracker_hits.size(); ihit++)
     {
+      std::clog << "DEBUG do_red_to_udd_conversion : Tracker hit #" << ihit << std::endl;
       snfee::data::tracker_digitized_hit red_tracker_hit = red_tracker_hits[ihit];
       snemo::datamodel::tracker_digitized_hit & udd_tracker_hit = udd_.add_tracker_hit();
       udd_tracker_hit.set_geom_id(red_tracker_hit.get_geom_id());
@@ -214,8 +223,9 @@ void do_red_to_udd_conversion(snfee::data::raw_event_data red_,
       // Do the loop on RED GG timestamps and convert them into UDD GG timestamps
 	  const std::vector<snfee::data::tracker_digitized_hit::gg_times> gg_timestamps_v = red_tracker_hit.get_times();
 
-      for (std::size_t iggtime = 0; iggtime < gg_timestamps_v.size(); iggtime)
+      for (std::size_t iggtime = 0; iggtime < gg_timestamps_v.size(); iggtime++)
         {
+          std::clog << "DEBUG do_red_to_udd_conversion : Tracker hit #" << ihit << " Geiger Time #" << iggtime <<  std::endl;
           // Retrieve RED GG timestamps
 	      const snfee::data::tracker_digitized_hit::gg_times & a_gg_timestamp = gg_timestamps_v[iggtime];
 

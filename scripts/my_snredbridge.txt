@@ -2,8 +2,16 @@ cmake \
     -DCMAKE_BUILD_TYPE:STRING="Release" \
     -DCMAKE_INSTALL_PREFIX:PATH="/sps/nemo/scratch/golivier/software/SNREDBridge/install.d" \
     -DBayeux_DIR:PATH=$(bxquery --cmakedir) \
-    -DSNCabling_DIR:PATH=$(sncablingquery --cmakedir) \
     -DSNFrontEndElectronics_DIR:PATH=$(snfee-query --cmakedir) \
-    -DFalaise_DIR:PATH=$(FALAISE_INSTALL_DIR) \
+    -DFalaise_DIR:PATH=${FALAISE_INSTALL_DIR} \
+    -GNinja \
+    ..
+
+
+Also working without specifying sw paths:
+
+cmake \
+    -DCMAKE_BUILD_TYPE:STRING="Release" \
+    -DCMAKE_INSTALL_PREFIX:PATH="/sps/nemo/scratch/golivier/software/SNREDBridge/install.d" \
     -GNinja \
     ..
