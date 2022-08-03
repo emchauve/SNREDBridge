@@ -9,8 +9,12 @@ foreach(source ${SOURCES})
     Bayeux::Bayeux
     SNFrontEndElectronics::snfee
     Falaise::Falaise)
+  message(STATUS "[debug] CMAKE_INSTALL_PREFIX = '${CMAKE_INSTALL_PREFIX}'")
+  message(STATUS "[debug] CMAKE_INSTALL_BINDIR = '${CMAKE_INSTALL_BINDIR}'")
+  message(STATUS "[debug] CMAKE_CURRENT_BINARY_DIR = '${CMAKE_CURRENT_BINARY_DIR}'")
+  message(STATUS "[debug] CMAKE_CURRENT_SOURCE_DIR = '${CMAKE_CURRENT_SOURCE_DIR}'")
   install(FILES
-    ${CMAKE_BINARY_DIR}/snredbridge-${exe_filename}
+    ${SNREDBRIDGE_BUILD_PREFIX}/bin/${exe_filename}
     DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}
     PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
     GROUP_READ GROUP_EXECUTE

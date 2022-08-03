@@ -14,12 +14,7 @@
 #include <bayeux/datatools/things.h>
 #include <bayeux/dpp/output_module.h>
 
-// - Boost:
-#include <boost/program_options.hpp>
-namespace bpo = boost::program_options;
-
 // - Falaise:
-#include <falaise/snemo/datamodels/data_model.h>
 #include <falaise/snemo/datamodels/event_header.h>
 #include <falaise/snemo/datamodels/unified_digitized_data.h>
 
@@ -43,6 +38,7 @@ int main (int argc, char *argv[])
   try {
   std::string input_filename = "";
   std::string output_filename = "";
+  size_t data_count = 100000000;
 
   for (int iarg=1; iarg<argc; ++iarg)
     {
@@ -61,14 +57,20 @@ int main (int argc, char *argv[])
           else if ((arg=="-o") || (arg=="--output"))
             output_filename = std::string(argv[++iarg]);
 
+          else if ((arg == "-n") || (arg == "--max-events"))
+            data_count = std::strtol(argv[++iarg], NULL, 10);
+
           else if (arg=="-h" || arg=="--help")
             {
               std::cout << std::endl;
               std::cout << "Usage:   " << argv[0] << " [options]" << std::endl;
               std::cout << std::endl;
               std::cout << "Options:   -h / --help" << std::endl;
-              std::cout << "           -i / --input   RED_FILE" << std::endl;
-              std::cout << "           -o / --output  UDD_FILE" << std::endl;
+              std::cout << "           -i / --input       RED_FILE" << std::endl;
+              std::cout << "           -o / --output      UDD_FILE" << std::endl;
+              std::cout << "           -n / --max-events  Max number of events" << std::endl;
+              std::cout << "           -v / --verbose     More logs" << std::endl;
+              std::cout << "           -d / --debug       Debug logs" << std::endl;
               std::cout << std::endl;
               return 0;
             }
@@ -112,14 +114,13 @@ int main (int argc, char *argv[])
   DT_LOG_DEBUG(logging, "Initialization of the output module is done.");
 
 
-
   // RED counter
   std::size_t red_counter = 0;
 
   // UDD counter
   std::size_t udd_counter = 0;
 
-  while (red_source.has_record_tag())
+  while (red_source.has_record_tag() && red_counter < data_count)
     {
       // Check the serialization tag of the next record:
       DT_THROW_IF(!red_source.record_tag_is(snfee::data::raw_event_data::SERIAL_TAG),
@@ -149,13 +150,10 @@ int main (int argc, char *argv[])
       DT_LOG_DEBUG(logging, "Exit do_red_to_udd_conversion");
 
       // Smart print :
-      event_record.tree_dump(std::clog, "The event data record composed by EH and UDD banks.");
+      // event_record.tree_dump(std::clog, "The event data record composed by EH and UDD banks.");
 
 
     } // (while red_source.has_record_tag())
-
-
-
 
 
   // Check input RED file and output UDD file and count the number of events in each file
@@ -215,15 +213,16 @@ void do_red_to_udd_conversion(const snfee::data::raw_event_data red_,
   //           << red_tracker_hits.size() << " tracker hit(s)"
   //           << std::endl;
 
-  std::string EH_output_tag = "UDD";
+  std::string EH_output_tag  = "EH";
   std::string UDD_output_tag = "UDD";
 
   // Empty working EH object
-  auto & EH = snedm::addToEvent<snemo::datamodel::event_header>(EH_output_tag, event_record_);
+  // auto & EH = snedm::addToEvent<snemo::datamodel::event_header>(EH_output_tag, event_record_);
+  auto & EH = event_record_.add<snemo::datamodel::event_header>(EH_output_tag);
 
   // Empty working UDD object
-  auto & UDD = snedm::addToEvent<snemo::datamodel::unified_digitized_data>(UDD_output_tag, event_record_);
-
+  // auto & UDD = snedm::addToEvent<snemo::datamodel::unified_digitized_data>(UDD_output_tag, event_record_);
+  auto & UDD = event_record_.add<snemo::datamodel::unified_digitized_data>(UDD_output_tag);
 
   // Fill Event Header based on RED attributes
   EH.get_id().set_run_number(red_run_id);
@@ -253,8 +252,8 @@ void do_red_to_udd_conversion(const snfee::data::raw_event_data red_,
       // std::clog << "DEBUG do_red_to_udd_conversion : Calo hit #" << ihit << std::endl;
       snfee::data::calo_digitized_hit red_calo_hit = red_calo_hits[ihit];
       snemo::datamodel::calorimeter_digitized_hit & udd_calo_hit = UDD.add_calorimeter_hit();
-
       udd_calo_hit.set_geom_id(red_calo_hit.get_geom_id());
+      udd_calo_hit.set_hit_id(red_calo_hit.get_hit_id());
       udd_calo_hit.set_timestamp(red_calo_hit.get_reference_time().get_ticks());
       std::vector<int16_t> calo_waveform = red_calo_hit.get_waveform();
       udd_calo_hit.set_waveform(calo_waveform);
@@ -284,6 +283,7 @@ void do_red_to_udd_conversion(const snfee::data::raw_event_data red_,
       snfee::data::tracker_digitized_hit red_tracker_hit = red_tracker_hits[ihit];
       snemo::datamodel::tracker_digitized_hit & udd_tracker_hit = UDD.add_tracker_hit();
       udd_tracker_hit.set_geom_id(red_tracker_hit.get_geom_id());
+      udd_tracker_hit.set_hit_id(red_tracker_hit.get_hit_id());
 
       // Do the loop on RED GG timestamps and convert them into UDD GG timestamps
 	  const std::vector<snfee::data::tracker_digitized_hit::gg_times> gg_timestamps_v = red_tracker_hit.get_times();
@@ -295,7 +295,7 @@ void do_red_to_udd_conversion(const snfee::data::raw_event_data red_,
 	      const snfee::data::tracker_digitized_hit::gg_times & a_gg_timestamp = gg_timestamps_v[iggtime];
 
           // Create empty UDD GG timestamps
-          snemo::datamodel::tracker_digitized_hit::gg_times udd_gg_timestamp;
+          snemo::datamodel::tracker_digitized_hit::gg_times & udd_gg_timestamp = udd_tracker_hit.add_times();
 
           // Fill UDD anode and cathode timestamps and RTD origin for backtracing
           snemo::datamodel::tracker_digitized_hit::rtd_origin anode_r0_rtd_origin(a_gg_timestamp.get_anode_origin(snfee::data::tracker_digitized_hit::ANODE_R0).get_hit_number(),
@@ -349,6 +349,9 @@ void do_red_to_udd_conversion(const snfee::data::raw_event_data red_,
 
     } // end for ihit
 
+  // red_.print_tree(std::clog);
+  // EH.tree_dump(std::clog, "Event header('EH'): ");
+  // UDD.tree_dump(std::clog, "Unified Digitized Data('UDD'): ");
 
   return;
 }
