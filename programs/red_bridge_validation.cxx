@@ -238,153 +238,181 @@ bool compare_red_event_record(const snfee::data::raw_event_data & red_,
   // Check Run ID, Event ID and Generation
   if (EH.get_id().get_run_number() == red_.get_run_id()
       && EH.get_id().get_event_number() == red_.get_event_id()
-      && EH.is_real()) is_event_header_equivalent = true;
+      && EH.is_real()) {
+    DT_LOG_DEBUG(logging_, "Corresponding EH is valid.");
+    is_event_header_equivalent = true;
+  }
 
   bool is_udd_global_equivalent = false;
   if (UDD.get_run_id() == red_.get_run_id()
       && UDD.get_event_id() == red_.get_event_id()
       && UDD.get_reference_timestamp() == red_.get_reference_time().get_ticks()
-      && UDD.get_origin_trigger_ids() == red_.get_origin_trigger_ids())
+      && UDD.get_origin_trigger_ids() == red_.get_origin_trigger_ids()) {
+    DT_LOG_DEBUG(logging_, "Corresponding UDD global is valid.");
     is_udd_global_equivalent = true;
+  }
 
   bool is_calo_equivalent = false;
 
   // RED Digitized calo hits
   const std::vector<snfee::data::calo_digitized_hit> red_calo_hits = red_.get_calo_hits();
 
+  std::size_t number_red_calo_hits = red_calo_hits.size();
+  std::size_t number_udd_calo_hits = UDD.get_calorimeter_hits().size();
+
+  DT_LOG_DEBUG(logging_, "Number of RED calo hits = " << number_red_calo_hits);
+  DT_LOG_DEBUG(logging_, "Number of UDD calo hits = " << number_udd_calo_hits);
+
   std::vector<bool> list_calos_corresponding;
 
-  for (std::size_t ihit = 0; ihit < red_calo_hits.size(); ihit++) {
-    snfee::data::calo_digitized_hit red_calo_hit = red_calo_hits[ihit];
-    bool is_corresponding_udd_calo_find = false;
-    std::size_t udd_calo_counter = 0;
+  if (number_red_calo_hits == number_udd_calo_hits) {
 
-    snemo::datamodel::calorimeter_digitized_hit udd_calo_hit;
+    for (std::size_t ihit = 0; ihit < red_calo_hits.size(); ihit++) {
+      snfee::data::calo_digitized_hit red_calo_hit = red_calo_hits[ihit];
+      bool is_corresponding_udd_calo_find = false;
+      std::size_t udd_calo_counter = 0;
 
-    while (!is_corresponding_udd_calo_find) {
-      udd_calo_hit = UDD.get_calorimeter_hits()[udd_calo_counter].get();
+      snemo::datamodel::calorimeter_digitized_hit udd_calo_hit;
 
-      if (udd_calo_hit.get_geom_id() ==  red_calo_hit.get_geom_id()
-          && udd_calo_hit.get_hit_id() == red_calo_hit.get_hit_id()) is_corresponding_udd_calo_find = true;
-      udd_calo_counter++;
-    }
+      while (!is_corresponding_udd_calo_find && udd_calo_counter < number_udd_calo_hits) {
+        udd_calo_hit = UDD.get_calorimeter_hits()[udd_calo_counter].get();
 
-    bool is_corresponding_calo_valid = false;
+        if (udd_calo_hit.get_geom_id() ==  red_calo_hit.get_geom_id()
+            && udd_calo_hit.get_hit_id() == red_calo_hit.get_hit_id()) is_corresponding_udd_calo_find = true;
+        udd_calo_counter++;
+      }
 
-    // Compare calo hit per attributes
-    // create a vector of a boolean for each calo hit already checked
-    if (is_corresponding_udd_calo_find) {
+      bool is_corresponding_calo_valid = false;
 
-      if (udd_calo_hit.get_geom_id() == red_calo_hit.get_geom_id()
-          && udd_calo_hit.get_hit_id()  == red_calo_hit.get_hit_id()
-          && udd_calo_hit.get_timestamp() == red_calo_hit.get_reference_time().get_ticks()
-          && udd_calo_hit.get_waveform()  == red_calo_hit.get_waveform()
-          && udd_calo_hit.is_low_threshold_only() == red_calo_hit.is_low_threshold_only()
-          && udd_calo_hit.is_high_threshold() == red_calo_hit.is_high_threshold()
-          && udd_calo_hit.get_fcr() == red_calo_hit.get_fcr()
-          && udd_calo_hit.get_lt_trigger_counter() == red_calo_hit.get_lt_trigger_counter()
-          && udd_calo_hit.get_lt_time_counter() == red_calo_hit.get_lt_time_counter()
-          && udd_calo_hit.get_fwmeas_baseline() == red_calo_hit.get_fwmeas_baseline()
-          && udd_calo_hit.get_fwmeas_peak_amplitude() == red_calo_hit.get_fwmeas_peak_amplitude()
-          && udd_calo_hit.get_fwmeas_peak_cell() == red_calo_hit.get_fwmeas_peak_cell()
-          && udd_calo_hit.get_fwmeas_charge() == red_calo_hit.get_fwmeas_charge()
-          && udd_calo_hit.get_fwmeas_rising_cell() == red_calo_hit.get_fwmeas_rising_cell()
-          && udd_calo_hit.get_fwmeas_falling_cell() == red_calo_hit.get_fwmeas_falling_cell()
-          && udd_calo_hit.get_origin().get_hit_number() == red_calo_hit.get_origin().get_hit_number()
-          && udd_calo_hit.get_origin().get_trigger_id() == red_calo_hit.get_origin().get_trigger_id()) {
+      // Compare calo hit per attributes
+      // create a vector of a boolean for each calo hit already checked
+      if (is_corresponding_udd_calo_find) {
+
+        if (udd_calo_hit.get_geom_id() == red_calo_hit.get_geom_id()
+            && udd_calo_hit.get_hit_id()  == red_calo_hit.get_hit_id()
+            && udd_calo_hit.get_timestamp() == red_calo_hit.get_reference_time().get_ticks()
+            && udd_calo_hit.get_waveform()  == red_calo_hit.get_waveform()
+            && udd_calo_hit.is_low_threshold_only() == red_calo_hit.is_low_threshold_only()
+            && udd_calo_hit.is_high_threshold() == red_calo_hit.is_high_threshold()
+            && udd_calo_hit.get_fcr() == red_calo_hit.get_fcr()
+            && udd_calo_hit.get_lt_trigger_counter() == red_calo_hit.get_lt_trigger_counter()
+            && udd_calo_hit.get_lt_time_counter() == red_calo_hit.get_lt_time_counter()
+            && udd_calo_hit.get_fwmeas_baseline() == red_calo_hit.get_fwmeas_baseline()
+            && udd_calo_hit.get_fwmeas_peak_amplitude() == red_calo_hit.get_fwmeas_peak_amplitude()
+            && udd_calo_hit.get_fwmeas_peak_cell() == red_calo_hit.get_fwmeas_peak_cell()
+            && udd_calo_hit.get_fwmeas_charge() == red_calo_hit.get_fwmeas_charge()
+            && udd_calo_hit.get_fwmeas_rising_cell() == red_calo_hit.get_fwmeas_rising_cell()
+            && udd_calo_hit.get_fwmeas_falling_cell() == red_calo_hit.get_fwmeas_falling_cell()
+            && udd_calo_hit.get_origin().get_hit_number() == red_calo_hit.get_origin().get_hit_number()
+            && udd_calo_hit.get_origin().get_trigger_id() == red_calo_hit.get_origin().get_trigger_id()) {
           DT_LOG_DEBUG(logging_, "Corresponding UDD calo is valid.");
           is_corresponding_calo_valid = true;
+        }
       }
-    }
 
-    list_calos_corresponding.push_back(is_corresponding_calo_valid);
+      list_calos_corresponding.push_back(is_corresponding_calo_valid);
 
-  } // end of calo red ihit
+    } // end of calo red ihit
 
-  is_calo_equivalent = std::all_of(list_calos_corresponding.begin(), list_calos_corresponding.end(), [](bool v) { return v; });
+  } // end of if n_red_calo == n_udd_calo
+
+  if (!list_calos_corresponding.empty()) is_calo_equivalent = std::all_of(list_calos_corresponding.begin(), list_calos_corresponding.end(), [](bool v) { return v; });
+  DT_LOG_DEBUG(logging_, "Calo is equivalent = " << is_calo_equivalent);
 
   bool is_tracker_equivalent = false;
 
   // RED Digitized tracker hits
   const std::vector<snfee::data::tracker_digitized_hit> red_tracker_hits = red_.get_tracker_hits();
 
+  std::size_t number_red_tracker_hits = red_tracker_hits.size();
+  std::size_t number_udd_tracker_hits = UDD.get_tracker_hits().size();
+
+  DT_LOG_DEBUG(logging_, "Number of RED tracker hits = " << number_red_tracker_hits);
+  DT_LOG_DEBUG(logging_, "Number of UDD tracker hits = " << number_udd_tracker_hits);
+
   std::vector<bool> list_trackers_corresponding;
 
-  for (std::size_t ihit = 0; ihit < red_tracker_hits.size(); ihit++) {
-    snfee::data::tracker_digitized_hit red_tracker_hit = red_tracker_hits[ihit];
-    bool is_corresponding_udd_tracker_find = false;
-    std::size_t udd_tracker_counter = 0;
+  if (number_red_tracker_hits == number_udd_tracker_hits) {
 
-    snemo::datamodel::tracker_digitized_hit udd_tracker_hit;
+    for (std::size_t ihit = 0; ihit < red_tracker_hits.size(); ihit++) {
+      snfee::data::tracker_digitized_hit red_tracker_hit = red_tracker_hits[ihit];
+      bool is_corresponding_udd_tracker_find = false;
+      std::size_t udd_tracker_counter = 0;
 
-    while (!is_corresponding_udd_tracker_find) {
-      udd_tracker_hit = UDD.get_tracker_hits()[udd_tracker_counter].get();
+      snemo::datamodel::tracker_digitized_hit udd_tracker_hit;
 
-      if (udd_tracker_hit.get_geom_id() ==  red_tracker_hit.get_geom_id()
-          && udd_tracker_hit.get_hit_id() == red_tracker_hit.get_hit_id()) is_corresponding_udd_tracker_find = true;
-      udd_tracker_counter++;
-    }
+      while (!is_corresponding_udd_tracker_find && udd_tracker_counter < number_udd_tracker_hits) {
+        udd_tracker_hit = UDD.get_tracker_hits()[udd_tracker_counter].get();
 
-    bool is_corresponding_tracker_valid = false;
+        if (udd_tracker_hit.get_geom_id() ==  red_tracker_hit.get_geom_id()
+            && udd_tracker_hit.get_hit_id() == red_tracker_hit.get_hit_id()) is_corresponding_udd_tracker_find = true;
+        udd_tracker_counter++;
+      }
 
-    // Compare tracker hit per attributes
-    // create a vector of a boolean for each tracker hit already checked
+      bool is_corresponding_tracker_valid = false;
 
-    // GO Note/Warning, number of GG times are the same for now between RED and UDD but it might not be the case in a near future
-    // if we change the event builder algorithm and decide to remove the 'deduplication' for tracker hits.
-    // Not sure how it will impact RED format and then get propagated to UDD format
-    if (is_corresponding_udd_tracker_find
-        && red_tracker_hit.get_times().size() == udd_tracker_hit.get_times().size()) {
+      // Compare tracker hit per attributes
+      // create a vector of a boolean for each tracker hit already checked
 
-      std::vector<bool> list_timestamps_corresponding;
-      bool is_corresponding_timestamp_valid = false;
-      for (std::size_t iggtime = 0; iggtime < red_tracker_hit.get_times().size(); iggtime++)
-        {
-          DT_LOG_DEBUG(logging_, "Corresponding UDD tracker is valid.");
-          // Retrieve RED and UDD GG timestamps
-          const snfee::data::tracker_digitized_hit::gg_times      & red_gg_timestamp = red_tracker_hit.get_times()[iggtime];
-          const snemo::datamodel::tracker_digitized_hit::gg_times & udd_gg_timestamp = udd_tracker_hit.get_times()[iggtime];
-          is_corresponding_tracker_valid = true;
-          if (udd_tracker_hit.get_geom_id() ==  red_tracker_hit.get_geom_id()
-              && udd_tracker_hit.get_hit_id() == red_tracker_hit.get_hit_id()
-              && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R0).get_hit_number() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R0).get_hit_number()
-              && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R0).get_trigger_id() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R0).get_trigger_id()
-              && udd_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R0) == red_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R0).get_ticks()
-              && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R1).get_hit_number() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R1).get_hit_number()
-              && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R1).get_trigger_id() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R1).get_trigger_id()
-              && udd_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R1) == red_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R1).get_ticks()
-              && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R2).get_hit_number() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R2).get_hit_number()
-              && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R2).get_trigger_id() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R2).get_trigger_id()
-              && udd_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R2) == red_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R2).get_ticks()
-              && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R3).get_hit_number() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R3).get_hit_number()
-              && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R3).get_trigger_id() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R3).get_trigger_id()
-              && udd_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R3) == red_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R3).get_ticks()
-              && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R4).get_hit_number() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R4).get_hit_number()
-              && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R4).get_trigger_id() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R4).get_trigger_id()
-              && udd_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R4) == red_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R4).get_ticks()
-              && udd_gg_timestamp.get_bottom_cathode_origin().get_hit_number() == red_gg_timestamp.get_bottom_cathode_origin().get_hit_number()
-              && udd_gg_timestamp.get_bottom_cathode_origin().get_trigger_id() == red_gg_timestamp.get_bottom_cathode_origin().get_trigger_id()
-              && udd_gg_timestamp.get_bottom_cathode_time() == red_gg_timestamp.get_bottom_cathode_time().get_ticks()
-              && udd_gg_timestamp.get_top_cathode_origin().get_hit_number() == red_gg_timestamp.get_top_cathode_origin().get_hit_number()
-              && udd_gg_timestamp.get_top_cathode_origin().get_trigger_id() == red_gg_timestamp.get_top_cathode_origin().get_trigger_id()
-              && udd_gg_timestamp.get_top_cathode_time() == red_gg_timestamp.get_top_cathode_time().get_ticks())
-            is_corresponding_timestamp_valid = true;
-        }
-      list_timestamps_corresponding.push_back(is_corresponding_timestamp_valid);
-      is_corresponding_tracker_valid = std::all_of(list_timestamps_corresponding.begin(), list_timestamps_corresponding.end(), [](bool v) { return v; });
-      list_trackers_corresponding.push_back(is_corresponding_tracker_valid);
-    } // end of is_corresponding_udd
+      // GO Note/Warning, number of GG times are the same for now between RED and UDD but it might not be the case in a near future
+      // if we change the event builder algorithm and decide to remove the 'deduplication' for tracker hits.
+      // Not sure how it will impact RED format and then get propagated to UDD format
+      if (is_corresponding_udd_tracker_find
+          && red_tracker_hit.get_times().size() == udd_tracker_hit.get_times().size()) {
 
-  } // end of tracker red ihit
+        std::vector<bool> list_timestamps_corresponding;
+        bool is_corresponding_timestamp_valid = false;
+        for (std::size_t iggtime = 0; iggtime < red_tracker_hit.get_times().size(); iggtime++)
+          {
+            DT_LOG_DEBUG(logging_, "Corresponding UDD tracker is valid.");
+            // Retrieve RED and UDD GG timestamps
+            const snfee::data::tracker_digitized_hit::gg_times      & red_gg_timestamp = red_tracker_hit.get_times()[iggtime];
+            const snemo::datamodel::tracker_digitized_hit::gg_times & udd_gg_timestamp = udd_tracker_hit.get_times()[iggtime];
+            is_corresponding_tracker_valid = true;
+            if (udd_tracker_hit.get_geom_id() ==  red_tracker_hit.get_geom_id()
+                && udd_tracker_hit.get_hit_id() == red_tracker_hit.get_hit_id()
+                && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R0).get_hit_number() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R0).get_hit_number()
+                && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R0).get_trigger_id() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R0).get_trigger_id()
+                && udd_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R0) == red_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R0).get_ticks()
+                && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R1).get_hit_number() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R1).get_hit_number()
+                && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R1).get_trigger_id() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R1).get_trigger_id()
+                && udd_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R1) == red_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R1).get_ticks()
+                && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R2).get_hit_number() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R2).get_hit_number()
+                && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R2).get_trigger_id() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R2).get_trigger_id()
+                && udd_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R2) == red_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R2).get_ticks()
+                && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R3).get_hit_number() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R3).get_hit_number()
+                && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R3).get_trigger_id() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R3).get_trigger_id()
+                && udd_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R3) == red_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R3).get_ticks()
+                && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R4).get_hit_number() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R4).get_hit_number()
+                && udd_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R4).get_trigger_id() == red_gg_timestamp.get_anode_origin(snemo::datamodel::tracker_digitized_hit::ANODE_R4).get_trigger_id()
+                && udd_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R4) == red_gg_timestamp.get_anode_time(snemo::datamodel::tracker_digitized_hit::ANODE_R4).get_ticks()
+                && udd_gg_timestamp.get_bottom_cathode_origin().get_hit_number() == red_gg_timestamp.get_bottom_cathode_origin().get_hit_number()
+                && udd_gg_timestamp.get_bottom_cathode_origin().get_trigger_id() == red_gg_timestamp.get_bottom_cathode_origin().get_trigger_id()
+                && udd_gg_timestamp.get_bottom_cathode_time() == red_gg_timestamp.get_bottom_cathode_time().get_ticks()
+                && udd_gg_timestamp.get_top_cathode_origin().get_hit_number() == red_gg_timestamp.get_top_cathode_origin().get_hit_number()
+                && udd_gg_timestamp.get_top_cathode_origin().get_trigger_id() == red_gg_timestamp.get_top_cathode_origin().get_trigger_id()
+                && udd_gg_timestamp.get_top_cathode_time() == red_gg_timestamp.get_top_cathode_time().get_ticks())
+              is_corresponding_timestamp_valid = true;
+          }
+        list_timestamps_corresponding.push_back(is_corresponding_timestamp_valid);
+        if (!list_timestamps_corresponding.empty()) is_corresponding_tracker_valid = std::all_of(list_timestamps_corresponding.begin(), list_timestamps_corresponding.end(), [](bool v) { return v; });
+        list_trackers_corresponding.push_back(is_corresponding_tracker_valid);
+      } // end of is_corresponding_udd
 
-  is_tracker_equivalent = std::all_of(list_trackers_corresponding.begin(), list_trackers_corresponding.end(), [](bool v) { return v; });
+    } // end of tracker red ihit
 
+  } // end of if n_red_calo == n_udd_calo
 
-  DT_LOG_DEBUG(logging_, "EH is equivalent" << is_event_header_equivalent
+  if (!list_trackers_corresponding.empty()) is_tracker_equivalent = std::all_of(list_trackers_corresponding.begin(), list_trackers_corresponding.end(), [](bool v) { return v; });
+  DT_LOG_DEBUG(logging_, "Tracker is equivalent = " << is_tracker_equivalent);
+
+  DT_LOG_DEBUG(logging_, "EH is equivalent = " << is_event_header_equivalent
                << " UDD global is equivalent = " << is_udd_global_equivalent
                << " UDD Calo is equivalent = " << is_calo_equivalent
                << " UDD Tracker is equivalent = " << is_tracker_equivalent);
   if (is_event_header_equivalent && is_udd_global_equivalent && is_calo_equivalent && is_tracker_equivalent) red_er_is_equivalent = true;
+  DT_LOG_DEBUG(logging_, "RED is equivalent to Event Record = " << red_er_is_equivalent);
+
 
   return red_er_is_equivalent;
 }
