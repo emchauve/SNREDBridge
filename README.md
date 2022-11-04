@@ -7,7 +7,7 @@ This SuperNEMO package will be used to trasnform SNFEE Raw Event Data (RED) into
 
 Two programs are provided:
 
-* ``red_bridge`` (simple):
+* ``red_bridge``:
 
   - reads a SNFEE RED file,
   - "converts" RED into UDD data for event header, calorimeter and tracker digitized hits
