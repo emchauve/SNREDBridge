@@ -1,3 +1,5 @@
+# CMake command with specific software paths:
+
 cmake \
     -DCMAKE_BUILD_TYPE:STRING="Release" \
     -DCMAKE_INSTALL_PREFIX:PATH="/sps/nemo/scratch/golivier/software/SNREDBridge/install.d" \
@@ -8,7 +10,7 @@ cmake \
     ..
 
 
-Also working without specifying sw paths:
+# CMake command light, also working without specifying software paths:
 
 cmake \
     -DCMAKE_BUILD_TYPE:STRING="Release" \

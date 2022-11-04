@@ -1,23 +1,26 @@
 # - Executable:
-file(GLOB SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/*.cxx)
-foreach(source ${SOURCES})
-  file(RELATIVE_PATH cxx_filename ${CMAKE_CURRENT_SOURCE_DIR} ${source})
-  string(REPLACE ".cxx" "" exe_filename ${cxx_filename})
-  message(STATUS "adding executable ${exe_filename}")
-  add_executable(${exe_filename} ${cxx_filename})
-  target_link_libraries(${exe_filename}
-    Bayeux::Bayeux
-    SNFrontEndElectronics::snfee
-    Falaise::Falaise)
-  message(STATUS "[debug] CMAKE_INSTALL_PREFIX = '${CMAKE_INSTALL_PREFIX}'")
-  message(STATUS "[debug] CMAKE_INSTALL_BINDIR = '${CMAKE_INSTALL_BINDIR}'")
-  message(STATUS "[debug] CMAKE_CURRENT_BINARY_DIR = '${CMAKE_CURRENT_BINARY_DIR}'")
-  message(STATUS "[debug] CMAKE_CURRENT_SOURCE_DIR = '${CMAKE_CURRENT_SOURCE_DIR}'")
-  install(FILES
-    ${SNREDBRIDGE_BUILD_PREFIX}/bin/${exe_filename}
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}
-    PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
-    GROUP_READ GROUP_EXECUTE
-    WORLD_READ WORLD_EXECUTE
-  )
-endforeach(source ${SOURCES})
+add_executable(SNREDBridge-red-bridge
+  red_bridge.cxx
+)
+
+target_link_libraries(SNREDBridge-red-bridge PRIVATE
+  Bayeux::Bayeux
+  SNFrontEndElectronics::snfee
+  Falaise::Falaise
+)
+
+# - Executable:
+add_executable(SNREDBridge-red-bridge-validation
+  red_bridge_validation.cxx
+)
+
+target_link_libraries(SNREDBridge-red-bridge-validation PRIVATE
+  Bayeux::Bayeux
+  SNFrontEndElectronics::snfee
+  Falaise::Falaise
+)
+
+# - Install if required - change install path with option DCMAKE_INSTALL_PREFIX:PATH=""
+install(TARGETS SNREDBridge-red-bridge SNREDBridge-red-bridge-validation
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}
+)
