@@ -1,7 +1,9 @@
 SNRedBridge package
 ===================
 
-This SuperNEMO package will be used to trasnform SNFEE Raw Event Data (RED) into Falaise Unified Digitized Data (UDD)
+This SuperNEMO package will be used to trasnform SNFEE Raw Event Data (RED) into Falaise Unified Digitized Data (UDD).
+SNREDBrige package depends on SNFEE and Falaise. You must source your environment before building and installing this package. 
+RED datamodel is in SNFEE and UDD datamodel is in Falaise.
 
 
 Two programs are provided:
@@ -32,6 +34,8 @@ $ snfee-query --help
 ```
 
 # Build from the source directory:
+
+You must load your environment BEFORE executing this little script. The standard snemo environment (Bayeux, SNFEE, SNCabling and Falaise) must be in your paths before building the SNREDBrige package.
 
 ```
 $ cd tools
