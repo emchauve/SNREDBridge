@@ -24,7 +24,7 @@ The ``SNFrontEndElectronics_`` library must be installed and setup on your syste
 .. _SNFrontEndElectronics: https://gitlab.in2p3.fr/SuperNEMO-DBD/SNFrontEndElectronics
 
 
-#. Checks the SNFrontEndElectronics setup:
+# Checks the SNFrontEndElectronics setup:
 
    .. code:: bash
 
@@ -33,7 +33,7 @@ The ``SNFrontEndElectronics_`` library must be installed and setup on your syste
       $ snfee-query --help
    ..
 
-#. Build from the source directory:
+# Build from the source directory:
 
    .. code:: bash
 
@@ -41,7 +41,7 @@ The ``SNFrontEndElectronics_`` library must be installed and setup on your syste
       $ ./build.bash
    ..
 
-#. Run the ``red_bridge`` program:
+# Run the ``red_bridge`` program:
 
    .. code:: bash
 
@@ -57,7 +57,7 @@ The ``SNFrontEndElectronics_`` library must be installed and setup on your syste
          -o "snemo_run-815_udd-v1.data.gz"
 	     -n 1000
 
-#. Run the ``red_bridge_validation`` program:
+# Run the ``red_bridge_validation`` program:
 
    .. code:: bash
 
@@ -74,9 +74,6 @@ The ``SNFrontEndElectronics_`` library must be installed and setup on your syste
 	     -n 1000
 
 .. end
-
-
-
 
 
 #
