@@ -38,26 +38,19 @@ endif()
 # CMake/project requirements and configuration
 #
 cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
-project(SNREDBridge)
-
-# - Load Builtin/Custom Modules
-include(GNUInstallDirs)
-list(INSERT CMAKE_MODULE_PATH 0 ${PROJECT_SOURCE_DIR}/cmake)
-message(STATUS "[info] CMAKE_MODULE_PATH = '${CMAKE_MODULE_PATH}'")
-
-# - Build setup
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
+project(SNREDBridge VERSION 0.1.0)
 
 # - Dependencies
 find_package(SNFrontEndElectronics REQUIRED)
 find_package(Falaise REQUIRED)
-
 include_directories(${SNFrontEndElectronics_INCLUDE_DIRS})
+include_directories(${Falaise_INCLUDE_DIRS})
+
+# Mandatory variable to use and find external libraries such as Bayeux, Falaise, SNFEE...
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 #-----------------------------------------------------------------------
 # Build the subdirectories as required
 #
-message( STATUS "[info] Adding subdirectory 'programs'...")
+message(STATUS "[info] Adding subdirectory 'programs'...")
 add_subdirectory(programs)

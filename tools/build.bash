@@ -12,10 +12,11 @@ mkdir -p ${build_dir}
 cd ${build_dir}
 
 cmake \
-    -DCMAKE_BUILD_TYPE:STRING="Release" \
-    -DCMAKE_INSTALL_PREFIX=${install_dir} \
+    -DCMAKE_INSTALL_PREFIX:PATH="${install_dir}" \
     -GNinja \
     ..
+
+
 if [ $? -ne 0 ]; then
     echo >&2 "[error] CMake configuration failed!"
     exit 1
