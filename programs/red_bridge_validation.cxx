@@ -38,6 +38,7 @@ int main (int argc, char *argv[])
   datatools::logger::priority logging = datatools::logger::PRIO_WARNING;
   int error_code = EXIT_SUCCESS;
   try {
+    bool is_debug = false;
     std::string input_red_filename = "";
     std::string input_udd_filename = "";
     size_t data_count = 100000000;
@@ -47,8 +48,10 @@ int main (int argc, char *argv[])
         std::string arg (argv[iarg]);
         if (arg[0] == '-')
           {
-            if ((arg == "-d") || (arg == "--debug"))
+            if ((arg == "-d") || (arg == "--debug")) {
+              is_debug = true;
               logging = datatools::logger::PRIO_DEBUG;
+            }
 
             else if ((arg == "-v") || (arg == "--verbose"))
               logging = datatools::logger::PRIO_INFORMATION;
@@ -130,6 +133,9 @@ int main (int argc, char *argv[])
     // Non equal events counter during comparison function (for debug purpose)
     std::size_t non_equal_event_counter = 0;
 
+    std::vector<snfee::data::raw_event_data> list_of_non_equal_red_events;
+    std::vector<snemo::datamodel::unified_digitized_data> list_of_non_equal_udd_events;
+
     // Check number of events in each data format
     while (red_source.has_record_tag() && red_counter < data_count)
       {
@@ -154,7 +160,7 @@ int main (int argc, char *argv[])
             DT_LOG_DEBUG(logging, "Cannot process another event record, status is " << status);
             break;
           }
-          // event_record.tree_dump(std::clog, "An event record:");
+          //event_record.tree_dump(std::clog, "An event record:");
 
           auto & EH  = event_record.get<snemo::datamodel::event_header>(EH_tag);
           auto & UDD = event_record.get<snemo::datamodel::unified_digitized_data>(UDD_tag);
@@ -174,7 +180,13 @@ int main (int argc, char *argv[])
             eh_counter++;
             udd_counter++;
           }
-          else non_equal_event_counter++;
+          else {
+            // Save non equal RED and UDD events for potential display in debug mode
+            list_of_non_equal_red_events.push_back(red);
+            list_of_non_equal_udd_events.push_back(event_record.get<snemo::datamodel::unified_digitized_data>(UDD_tag));
+            non_equal_event_counter++;
+
+          }
         }
 
         else {
@@ -197,6 +209,14 @@ int main (int argc, char *argv[])
     std::cout << "- Missing events     : " << missing_event_counter << std::endl;
     std::cout << "- Non equal events   : " << non_equal_event_counter << std::endl;
 
+    if (is_debug && non_equal_event_counter != 0)
+      {
+        DT_LOG_DEBUG(logging, "Display RED and UDD non equal events");
+        for (std::size_t i = 0; i < non_equal_event_counter; i++) {
+          list_of_non_equal_red_events[i].print_tree(std::clog);
+          list_of_non_equal_udd_events[i].print_tree(std::clog);
+        }
+      }
 
     snfee::terminate();
 
@@ -259,6 +279,7 @@ bool compare_red_event_record(const snfee::data::raw_event_data & red_,
 
   std::size_t number_red_calo_hits = red_calo_hits.size();
   std::size_t number_udd_calo_hits = UDD.get_calorimeter_hits().size();
+  if (number_red_calo_hits == 0 && number_udd_calo_hits == 0) is_calo_equivalent = true;
 
   DT_LOG_DEBUG(logging_, "Number of RED calo hits = " << number_red_calo_hits);
   DT_LOG_DEBUG(logging_, "Number of UDD calo hits = " << number_udd_calo_hits);
@@ -326,6 +347,7 @@ bool compare_red_event_record(const snfee::data::raw_event_data & red_,
 
   std::size_t number_red_tracker_hits = red_tracker_hits.size();
   std::size_t number_udd_tracker_hits = UDD.get_tracker_hits().size();
+  if (number_red_tracker_hits == 0 && number_udd_tracker_hits == 0) is_tracker_equivalent = true;
 
   DT_LOG_DEBUG(logging_, "Number of RED tracker hits = " << number_red_tracker_hits);
   DT_LOG_DEBUG(logging_, "Number of UDD tracker hits = " << number_udd_tracker_hits);
