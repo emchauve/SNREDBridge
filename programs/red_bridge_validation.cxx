@@ -26,7 +26,8 @@
 
 bool compare_red_event_record(const snfee::data::raw_event_data &,
                               const datatools::things &,
-                              const datatools::logger::priority &);
+                              const datatools::logger::priority &,
+                              bool);
 
 
 //----------------------------------------------------------------------
@@ -42,6 +43,7 @@ int main (int argc, char *argv[])
     std::string input_red_filename = "";
     std::string input_udd_filename = "";
     size_t data_count = 100000000;
+    bool no_waveform = false;
 
     for (int iarg=1; iarg<argc; ++iarg)
       {
@@ -65,15 +67,19 @@ int main (int argc, char *argv[])
             else if ((arg == "-n") || (arg == "--max-events"))
               data_count = std::strtol(argv[++iarg], NULL, 10);
 
+            else if ((arg == "-no-wf") || (arg == "--no-waveform"))
+              no_waveform = true;
+
             else if (arg=="-h" || arg=="--help")
               {
                 std::cout << std::endl;
                 std::cout << "Usage:   " << argv[0] << " [options]" << std::endl;
                 std::cout << std::endl;
                 std::cout << "Options:   -h    / --help" << std::endl;
-                std::cout << "           -ired / --input-red   RED_FILE" << std::endl;
-                std::cout << "           -iudd / --input-udd   UDD_FILE" << std::endl;
-                std::cout << "           -n    / --max-events  Max number of events" << std::endl;
+                std::cout << "           -ired / --input-red    RED_FILE" << std::endl;
+                std::cout << "           -iudd / --input-udd    UDD_FILE" << std::endl;
+                std::cout << "           -n    / --max-events   Max number of events" << std::endl;
+                std::cout << "           -no-wf / --no-waveform Do compare the waveform between RED and UDD" << std::endl;
                 std::cout << std::endl;
                 return 0;
               }
@@ -175,7 +181,7 @@ int main (int argc, char *argv[])
 
         if (find_corresponding_udd_event) {
           er_counter++;
-          bool is_valid = compare_red_event_record(red, event_record, logging);
+          bool is_valid = compare_red_event_record(red, event_record, logging, no_waveform);
           if (is_valid) {
             eh_counter++;
             udd_counter++;
@@ -238,7 +244,8 @@ int main (int argc, char *argv[])
 
 bool compare_red_event_record(const snfee::data::raw_event_data & red_,
                               const datatools::things & event_record_,
-                              const datatools::logger::priority & logging_)
+                              const datatools::logger::priority & logging_,
+                              bool no_wf_)
 {
   DT_LOG_DEBUG(logging_, "Entering compare_red_event_record.");
   bool red_er_is_equivalent = false;
@@ -309,25 +316,47 @@ bool compare_red_event_record(const snfee::data::raw_event_data & red_,
       // create a vector of a boolean for each calo hit already checked
       if (is_corresponding_udd_calo_find) {
 
-        if (udd_calo_hit.get_geom_id() == red_calo_hit.get_geom_id()
-            && udd_calo_hit.get_hit_id()  == red_calo_hit.get_hit_id()
-            && udd_calo_hit.get_timestamp() == red_calo_hit.get_reference_time().get_ticks()
-            && udd_calo_hit.get_waveform()  == red_calo_hit.get_waveform()
-            && udd_calo_hit.is_low_threshold_only() == red_calo_hit.is_low_threshold_only()
-            && udd_calo_hit.is_high_threshold() == red_calo_hit.is_high_threshold()
-            && udd_calo_hit.get_fcr() == red_calo_hit.get_fcr()
-            && udd_calo_hit.get_lt_trigger_counter() == red_calo_hit.get_lt_trigger_counter()
-            && udd_calo_hit.get_lt_time_counter() == red_calo_hit.get_lt_time_counter()
-            && udd_calo_hit.get_fwmeas_baseline() == red_calo_hit.get_fwmeas_baseline()
-            && udd_calo_hit.get_fwmeas_peak_amplitude() == red_calo_hit.get_fwmeas_peak_amplitude()
-            && udd_calo_hit.get_fwmeas_peak_cell() == red_calo_hit.get_fwmeas_peak_cell()
-            && udd_calo_hit.get_fwmeas_charge() == red_calo_hit.get_fwmeas_charge()
-            && udd_calo_hit.get_fwmeas_rising_cell() == red_calo_hit.get_fwmeas_rising_cell()
-            && udd_calo_hit.get_fwmeas_falling_cell() == red_calo_hit.get_fwmeas_falling_cell()
-            && udd_calo_hit.get_origin().get_hit_number() == red_calo_hit.get_origin().get_hit_number()
-            && udd_calo_hit.get_origin().get_trigger_id() == red_calo_hit.get_origin().get_trigger_id()) {
-          DT_LOG_DEBUG(logging_, "Corresponding UDD calo is valid.");
-          is_corresponding_calo_valid = true;
+        if (!no_wf_){
+          if (udd_calo_hit.get_geom_id() == red_calo_hit.get_geom_id()
+              && udd_calo_hit.get_hit_id()  == red_calo_hit.get_hit_id()
+              && udd_calo_hit.get_timestamp() == red_calo_hit.get_reference_time().get_ticks()
+              && udd_calo_hit.get_waveform()  == red_calo_hit.get_waveform()
+              && udd_calo_hit.is_low_threshold_only() == red_calo_hit.is_low_threshold_only()
+              && udd_calo_hit.is_high_threshold() == red_calo_hit.is_high_threshold()
+              && udd_calo_hit.get_fcr() == red_calo_hit.get_fcr()
+              && udd_calo_hit.get_lt_trigger_counter() == red_calo_hit.get_lt_trigger_counter()
+              && udd_calo_hit.get_lt_time_counter() == red_calo_hit.get_lt_time_counter()
+              && udd_calo_hit.get_fwmeas_baseline() == red_calo_hit.get_fwmeas_baseline()
+              && udd_calo_hit.get_fwmeas_peak_amplitude() == red_calo_hit.get_fwmeas_peak_amplitude()
+              && udd_calo_hit.get_fwmeas_peak_cell() == red_calo_hit.get_fwmeas_peak_cell()
+              && udd_calo_hit.get_fwmeas_charge() == red_calo_hit.get_fwmeas_charge()
+              && udd_calo_hit.get_fwmeas_rising_cell() == red_calo_hit.get_fwmeas_rising_cell()
+              && udd_calo_hit.get_fwmeas_falling_cell() == red_calo_hit.get_fwmeas_falling_cell()
+              && udd_calo_hit.get_origin().get_hit_number() == red_calo_hit.get_origin().get_hit_number()
+              && udd_calo_hit.get_origin().get_trigger_id() == red_calo_hit.get_origin().get_trigger_id()) {
+            DT_LOG_DEBUG(logging_, "Corresponding UDD calo is valid.");
+            is_corresponding_calo_valid = true;
+          }
+        } else {
+          if (udd_calo_hit.get_geom_id() == red_calo_hit.get_geom_id()
+              && udd_calo_hit.get_hit_id()  == red_calo_hit.get_hit_id()
+              && udd_calo_hit.get_timestamp() == red_calo_hit.get_reference_time().get_ticks()
+              && udd_calo_hit.is_low_threshold_only() == red_calo_hit.is_low_threshold_only()
+              && udd_calo_hit.is_high_threshold() == red_calo_hit.is_high_threshold()
+              && udd_calo_hit.get_fcr() == red_calo_hit.get_fcr()
+              && udd_calo_hit.get_lt_trigger_counter() == red_calo_hit.get_lt_trigger_counter()
+              && udd_calo_hit.get_lt_time_counter() == red_calo_hit.get_lt_time_counter()
+              && udd_calo_hit.get_fwmeas_baseline() == red_calo_hit.get_fwmeas_baseline()
+              && udd_calo_hit.get_fwmeas_peak_amplitude() == red_calo_hit.get_fwmeas_peak_amplitude()
+              && udd_calo_hit.get_fwmeas_peak_cell() == red_calo_hit.get_fwmeas_peak_cell()
+              && udd_calo_hit.get_fwmeas_charge() == red_calo_hit.get_fwmeas_charge()
+              && udd_calo_hit.get_fwmeas_rising_cell() == red_calo_hit.get_fwmeas_rising_cell()
+              && udd_calo_hit.get_fwmeas_falling_cell() == red_calo_hit.get_fwmeas_falling_cell()
+              && udd_calo_hit.get_origin().get_hit_number() == red_calo_hit.get_origin().get_hit_number()
+              && udd_calo_hit.get_origin().get_trigger_id() == red_calo_hit.get_origin().get_trigger_id()) {
+            DT_LOG_DEBUG(logging_, "Corresponding UDD calo is valid.");
+            is_corresponding_calo_valid = true;
+          }
         }
       }
 

@@ -25,7 +25,8 @@
 
 
 void do_red_to_udd_conversion(const snfee::data::raw_event_data,
-                              datatools::things &);
+                              datatools::things &,
+                              const bool);
 
 //----------------------------------------------------------------------
 // MAIN PROGRAM
@@ -39,6 +40,7 @@ int main (int argc, char *argv[])
   std::string input_filename = "";
   std::string output_filename = "";
   size_t data_count = 100000000;
+  bool no_waveform = false;
 
   for (int iarg=1; iarg<argc; ++iarg)
     {
@@ -60,6 +62,9 @@ int main (int argc, char *argv[])
           else if ((arg == "-n") || (arg == "--max-events"))
             data_count = std::strtol(argv[++iarg], NULL, 10);
 
+          else if ((arg == "-no-wf") || (arg == "--no-waveform"))
+            no_waveform = true;
+
           else if (arg=="-h" || arg=="--help")
             {
               std::cout << std::endl;
@@ -69,6 +74,7 @@ int main (int argc, char *argv[])
               std::cout << "           -i / --input       RED_FILE" << std::endl;
               std::cout << "           -o / --output      UDD_FILE" << std::endl;
               std::cout << "           -n / --max-events  Max number of events" << std::endl;
+              std::cout << "           -no-wf / --no-waveform Do not save the waveform from RED to UDD" << std::endl;
               std::cout << "           -v / --verbose     More logs" << std::endl;
               std::cout << "           -d / --debug       Debug logs" << std::endl;
               std::cout << std::endl;
@@ -142,7 +148,7 @@ int main (int argc, char *argv[])
       event_record.set_description("An event record composed by an Event Header (EH) and the Unified Digitized Data (UDD) banks");
 
       // Do the RED to UDD conversion and fill the Event record
-      do_red_to_udd_conversion(red, event_record);
+      do_red_to_udd_conversion(red, event_record, no_waveform);
 
       dpp::base_module::process_status status = writer.process(event_record);
 
@@ -189,7 +195,8 @@ int main (int argc, char *argv[])
 
 
 void do_red_to_udd_conversion(const snfee::data::raw_event_data red_,
-                              datatools::things & event_record_)
+                              datatools::things & event_record_,
+                              bool no_wf_)
 {
   // Run number
   int32_t red_run_id   = red_.get_run_id();
@@ -256,7 +263,7 @@ void do_red_to_udd_conversion(const snfee::data::raw_event_data red_,
       udd_calo_hit.set_hit_id(red_calo_hit.get_hit_id());
       udd_calo_hit.set_timestamp(red_calo_hit.get_reference_time().get_ticks());
       std::vector<int16_t> calo_waveform = red_calo_hit.get_waveform();
-      udd_calo_hit.set_waveform(calo_waveform);
+      if (!no_wf_) udd_calo_hit.set_waveform(calo_waveform);
       udd_calo_hit.set_low_threshold_only(red_calo_hit.is_low_threshold_only());
       udd_calo_hit.set_high_threshold(red_calo_hit.is_high_threshold());
       udd_calo_hit.set_fcr(red_calo_hit.get_fcr());
