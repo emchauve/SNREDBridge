@@ -260,6 +260,13 @@ void do_red_to_udd_conversion(const snfee::data::raw_event_data red_,
       snfee::data::calo_digitized_hit red_calo_hit = red_calo_hits[ihit];
       snemo::datamodel::calorimeter_digitized_hit & udd_calo_hit = UDD.add_calorimeter_hit();
       udd_calo_hit.set_geom_id(red_calo_hit.get_geom_id());
+      // EC: fix wrong geom ID type (former bug in SNFEE's src/snfee/data/sncabling_bridge.cc)
+      if (udd_calo_hit.get_geom_id().get_type() == 1301)
+	udd_calo_hit.grab_geom_id().set_type(1302);
+      else if (udd_calo_hit.get_geom_id().get_type() == 1231)
+	udd_calo_hit.grab_geom_id().set_type(1232);
+      else if (udd_calo_hit.get_geom_id().get_type() == 1251)
+	udd_calo_hit.grab_geom_id().set_type(1252);
       udd_calo_hit.set_hit_id(red_calo_hit.get_hit_id());
       udd_calo_hit.set_timestamp(red_calo_hit.get_reference_time().get_ticks());
       std::vector<int16_t> calo_waveform = red_calo_hit.get_waveform();
